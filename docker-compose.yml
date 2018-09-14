@@ -1,0 +1,20 @@
+version: '3'
+services:
+  nginx:
+    build: ./docker/nginx
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/sites-enabled/app.conf:/etc/nginx/sites-enabled/app.conf:ro
+      - .:/var/www/app
+    ports:
+      - "80:80"
+    depends_on:
+      - php-fpm
+  php-fpm:
+    image: php:7.2.9-fpm-alpine
+    volumes:
+      - ./docker/php-fpm/symfony.ini:/usr/local/etc/php/conf.d/symfony.ini:ro
+      - ./docker/php-fpm/symfony.ini:/usr/local/etc/php-fpm.d/symfony.ini:ro
+      - ./docker/php-fpm/symfony.pool.conf:/usr/local/etc/php-fpm.d/symfony.pool.conf:ro
+      - .:/var/www/app
+
