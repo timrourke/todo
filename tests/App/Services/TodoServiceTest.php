@@ -97,7 +97,11 @@ class TodoServiceTest extends TestCase
 
         $service = new TodoService($this->entityManagerMock, $this->repoMock);
 
-        $todo = $service->createTodo($expectedTitle, $expectedDescription);
+        $newTodo = new Todo();
+        $newTodo->setTitle($expectedTitle);
+        $newTodo->setDescription($expectedDescription);
+
+        $todo = $service->createTodo($newTodo);
 
         $this->assertSame(
             $expectedTitle,
@@ -126,16 +130,18 @@ class TodoServiceTest extends TestCase
      */
     public function shouldPersistCreatedTodo()
     {
+        $todo = new Todo();
+
         $this->entityManagerMock->expects($this->once())
             ->method('persist')
-            ->with($this->isInstanceOf(Todo::class));
+            ->with($todo);
 
         $this->entityManagerMock->expects($this->once())
             ->method('flush');
 
         $service = new TodoService($this->entityManagerMock, $this->repoMock);
 
-        $service->createTodo('Some title', 'Some description');
+        $service->createTodo($todo);
     }
 
     /**
@@ -156,17 +162,17 @@ class TodoServiceTest extends TestCase
         $todo->setCreatedAt($originalCreatedAt);
         $todo->setUpdatedAt($originalUpdatedAt);
 
+        $todoWithNewData = new Todo();
+        $todoWithNewData->setTitle($newTitle);
+        $todoWithNewData->setDescription($newDescription);
+
         $this->repoMock->expects($this->once())
             ->method('find')
             ->willReturn($todo);
 
         $service = new TodoService($this->entityManagerMock, $this->repoMock);
 
-        $service->updateTodo(
-            1,
-            $newTitle,
-            $newDescription
-        );
+        $service->updateTodo(1, $todoWithNewData);
 
         $this->assertSame(
             $newTitle,

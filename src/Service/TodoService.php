@@ -59,39 +59,33 @@ class TodoService
     }
 
     /**
-     * @param string $title
-     * @param string $description
+     * @param \App\Entity\Todo $newTodo
      * @return \App\Entity\Todo
      * @throws \Exception
      */
-    public function createTodo(string $title, string $description): Todo
+    public function createTodo(Todo $newTodo): Todo
     {
-        $todo = new Todo();
+        $newTodo->setCreatedAt(new DateTimeImmutable());
+        $newTodo->setUpdatedAt(new DateTimeImmutable());
 
-        $todo->setTitle($title);
-        $todo->setDescription($description);
-        $todo->setCreatedAt(new DateTimeImmutable());
-        $todo->setUpdatedAt(new DateTimeImmutable());
-
-        $this->entityManager->persist($todo);
+        $this->entityManager->persist($newTodo);
         $this->entityManager->flush();
 
-        return $todo;
+        return $newTodo;
     }
 
     /**
      * @param int $id
-     * @param string $title
-     * @param string $description
+     * @param \App\Entity\Todo $todoWithNewData
      * @return \App\Entity\Todo
      * @throws \Exception
      */
-    public function updateTodo(int $id, string $title, string $description): Todo
+    public function updateTodo(int $id, Todo $todoWithNewData): Todo
     {
         $todo = $this->repo->find($id);
 
-        $todo->setTitle($title);
-        $todo->setDescription($description);
+        $todo->setTitle($todoWithNewData->getTitle());
+        $todo->setDescription($todoWithNewData->getDescription());
         $todo->setUpdatedAt(new DateTimeImmutable());
 
         $this->entityManager->persist($todo);
@@ -106,6 +100,11 @@ class TodoService
     public function deleteTodo(int $id): void
     {
         $todo = $this->repo->find($id);
+
+        // Deleting a non-existing entity should be idempotent
+        if (is_null($todo)) {
+            return;
+        }
 
         $this->entityManager->remove($todo);
         $this->entityManager->flush();

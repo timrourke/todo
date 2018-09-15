@@ -2,9 +2,11 @@
 
 namespace App\Controller;
 
+use App\Deserializer\TodoJsonDeserializer;
 use App\Serializer\TodoJsonSerializer;
 use App\Service\TodoService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
 class TodoController extends AbstractController
@@ -19,10 +21,19 @@ class TodoController extends AbstractController
      */
     private $serializer;
 
-    public function __construct(TodoService $todoService, TodoJsonSerializer $serializer)
-    {
+    /**
+     * @var \App\Deserializer\TodoJsonDeserializer
+     */
+    private $deserializer;
+
+    public function __construct(
+        TodoService $todoService,
+        TodoJsonSerializer $serializer,
+        TodoJsonDeserializer $deserializer
+    ) {
         $this->todoService = $todoService;
         $this->serializer = $serializer;
+        $this->deserializer = $deserializer;
     }
 
     /**
@@ -53,11 +64,15 @@ class TodoController extends AbstractController
 
     /**
      * @Route("/todos", methods={"POST"})
+     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
      * @throws \Exception
      */
-    public function create()
+    public function create(Request $request)
     {
-        $todo = $this->todoService->createTodo('foo', 'bar');
+        $json = $request->getContent();
+        $todo = $this->deserializer->deserializeOne($json);
+        $todo = $this->todoService->createTodo($todo);
 
         return $this->json([
             'todo' => $this->serializer->serializeOne($todo),
@@ -66,17 +81,16 @@ class TodoController extends AbstractController
 
     /**
      * @Route("/todos/{id}", methods={"PUT"})
+     * @param \Symfony\Component\HttpFoundation\Request $request
      * @param int $id
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      * @throws \Exception
      */
-    public function update(int $id)
+    public function update(Request $request, int $id)
     {
-        $updatedTodo = $this->todoService->updateTodo(
-            $id,
-            'new title',
-            'new description'
-        );
+        $json = $request->getContent();
+        $todo = $this->deserializer->deserializeOne($json);
+        $updatedTodo = $this->todoService->updateTodo($id, $todo);
 
         return $this->json([
             'todo' => $this->serializer->serializeOne($updatedTodo),

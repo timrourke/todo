@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Serializer;
 
 use App\Entity\Todo;
-use DateTimeImmutable;
 
 class TodoJsonSerializer
 {
+    use SerializesDateTimesTrait;
+
     /**
      * @param \App\Entity\Todo $todo
      * @return array
@@ -19,8 +20,8 @@ class TodoJsonSerializer
             'id'          => $todo->getId(),
             'title'       => $todo->getTitle(),
             'description' => $todo->getDescription(),
-            'createdAt'   => $todo->getCreatedAt()->format(DateTimeImmutable::ATOM),
-            'updatedAt'   => $todo->getUpdatedAt()->format(DateTimeImmutable::ATOM),
+            'createdAt'   => $this->serializeDate($todo->getCreatedAt()),
+            'updatedAt'   => $this->serializeDate($todo->getUpdatedAt()),
         ];
     }
 
