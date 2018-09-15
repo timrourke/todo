@@ -15,7 +15,9 @@
         "symfony/yaml": "*"
     },
     "require-dev": {
+        "dama/doctrine-test-bundle": "^5.0",
         "symfony/browser-kit": "*",
+        "symfony/css-selector": "*",
         "symfony/dotenv": "*",
         "symfony/maker-bundle": "^1.7",
         "symfony/phpunit-bridge": "*"
