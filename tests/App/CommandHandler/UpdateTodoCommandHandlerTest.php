@@ -20,7 +20,6 @@ class UpdateTodoCommandHandlerTest extends TestCase
      */
     public function testHandle()
     {
-
         $command = $this->createCommand();
 
         /* @var \PHPUnit\Framework\MockObject\MockObject|\App\Service\TodoService $serviceMock */
