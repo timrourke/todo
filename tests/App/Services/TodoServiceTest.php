@@ -244,6 +244,29 @@ class TodoServiceTest extends TestCase
     }
 
     /**
+     * @test
+     */
+    public function shouldDoNothingIfDeletedTodoDoesNotExist()
+    {
+        $expectedId = 1;
+
+        $this->repoMock->expects($this->once())
+            ->method('find')
+            ->with($expectedId)
+            ->willReturn(null);
+
+        $this->entityManagerMock->expects($this->never())
+            ->method('remove');
+
+        $this->entityManagerMock->expects($this->never())
+            ->method('flush');
+
+        $service = new TodoService($this->entityManagerMock, $this->repoMock);
+
+        $service->deleteTodo($expectedId);
+    }
+
+    /**
      * @return \PHPUnit\Framework\MockObject\MockObject|EntityManager
      */
     private function getEntityManagerMock()
