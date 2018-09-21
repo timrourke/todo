@@ -139,7 +139,33 @@ class TodoControllerTest extends TestCase
         );
 
         $this->assertSame(
-            json_encode([]),
+            json_encode(new \stdClass()),
+            $actual->getContent()
+        );
+    }
+
+    /**
+     * @test
+     * @throws \Exception
+     */
+    public function shouldRender404WhenInvalidUuidProvided()
+    {
+        $uuidString = Uuid::uuid1()->toString() . "somechars";
+
+        $this->todoServiceMock->expects($this->once())
+            ->method('findTodo')
+            ->with($uuidString)
+            ->willThrowException(new \RuntimeException());
+
+        $actual = $this->controller->getOne($uuidString);
+
+        $this->assertSame(
+            404,
+            $actual->getStatusCode()
+        );
+
+        $this->assertSame(
+            json_encode(new \stdClass()),
             $actual->getContent()
         );
     }

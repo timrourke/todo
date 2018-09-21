@@ -9,6 +9,7 @@ use App\Command\UpdateTodoCommand;
 use App\Entity\TodoId;
 use App\Serializer\TodoJsonSerializer;
 use App\Service\TodoService;
+use Doctrine\DBAL\Types\ConversionException;
 use League\Tactician\CommandBus;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -70,9 +71,9 @@ class TodoController extends AbstractController
             return $this->json([
                 'todo' => $this->serializer->serializeOne($todo),
             ]);
-        } catch (RuntimeException $e) {
+        } catch (RuntimeException | ConversionException $e) {
             return $this->json(
-                [],
+                null,
                 404
             );
         }
