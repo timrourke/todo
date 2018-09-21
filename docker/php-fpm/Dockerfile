@@ -1,5 +1,9 @@
 FROM php:7.2.9-fpm-alpine
 
+WORKDIR /var/www/app
+
+RUN echo "PS1='\w\$ '" >> ~/.bashrc
+
 RUN apk update && apk add \
     bash \
     mysql
