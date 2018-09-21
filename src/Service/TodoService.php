@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Todo;
+use App\Entity\TodoId;
 use App\Repository\TodoRepository;
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use RuntimeException;
 
 /**
  * Class TodoService
@@ -60,38 +61,36 @@ class TodoService
 
     /**
      * @param \App\Entity\Todo $newTodo
-     * @return \App\Entity\Todo
      * @throws \Exception
      */
-    public function createTodo(Todo $newTodo): Todo
+    public function createTodo(Todo $newTodo): void
     {
-        $newTodo->setCreatedAt(new DateTimeImmutable());
-        $newTodo->setUpdatedAt(new DateTimeImmutable());
-
         $this->entityManager->persist($newTodo);
         $this->entityManager->flush();
-
-        return $newTodo;
     }
 
     /**
-     * @param int $id
      * @param \App\Entity\Todo $todoWithNewData
-     * @return \App\Entity\Todo
      * @throws \Exception
      */
-    public function updateTodo(int $id, Todo $todoWithNewData): Todo
+    public function updateTodo(Todo $todoWithNewData): void
     {
-        $todo = $this->repo->find($id);
+        $todo = $this->repo->find($todoWithNewData->getId()->asInt());
 
-        $todo->setTitle($todoWithNewData->getTitle());
-        $todo->setDescription($todoWithNewData->getDescription());
-        $todo->setUpdatedAt(new DateTimeImmutable());
+        if (!$todo) {
+            throw new RuntimeException(
+                sprintf(
+                    'No Todo found by ID %d',
+                    $todoWithNewData->getId()->asInt()
+                )
+            );
+        }
+
+        $todo->changeTitle($todoWithNewData->getTitle());
+        $todo->changeDescription($todoWithNewData->getDescription());
 
         $this->entityManager->persist($todo);
         $this->entityManager->flush();
-
-        return $todo;
     }
 
     /**
@@ -108,5 +107,14 @@ class TodoService
 
         $this->entityManager->remove($todo);
         $this->entityManager->flush();
+    }
+
+    /**
+     * @return \App\Entity\TodoId
+     * @throws \Doctrine\DBAL\DBALException
+     */
+    public function nextIdentity(): TodoId
+    {
+        return $this->repo->nextIdentity();
     }
 }

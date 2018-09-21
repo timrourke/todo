@@ -17,7 +17,7 @@ class TodoJsonSerializer
     public function serializeOne(Todo $todo): array
     {
         return [
-            'id'          => $todo->getId(),
+            'id'          => $todo->getId()->asInt(),
             'title'       => $todo->getTitle(),
             'description' => $todo->getDescription(),
             'createdAt'   => $this->serializeDate($todo->getCreatedAt()),

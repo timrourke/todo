@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -11,7 +12,7 @@ class Todo
 {
     /**
      * @ORM\Id()
-     * @ORM\GeneratedValue()
+     * @ORM\GeneratedValue(strategy="NONE")
      * @ORM\Column(type="integer")
      */
     private $id;
@@ -36,56 +37,79 @@ class Todo
      */
     private $updatedAt;
 
-    public function getId(): ?int
-    {
-        return $this->id;
+    public function __construct(
+        TodoId $todoId,
+        string $title,
+        string $description,
+        DateTimeImmutable $createdAt,
+        DateTimeImmutable $updatedAt
+    ) {
+        $this->id = $todoId->asInt();
+        $this->title = $title;
+        $this->description = $description;
+        $this->createdAt = $createdAt;
+        $this->updatedAt = $updatedAt;
     }
 
-    public function getTitle(): ?string
+    /**
+     * @return \App\Entity\TodoId
+     */
+    public function getId(): TodoId
+    {
+        return TodoId::fromInteger($this->id);
+    }
+
+    /**
+     * @return string
+     */
+    public function getTitle(): string
     {
         return $this->title;
     }
 
-    public function setTitle(string $title): self
-    {
-        $this->title = $title;
-
-        return $this;
-    }
-
-    public function getDescription(): ?string
+    /**
+     * @return string
+     */
+    public function getDescription(): string
     {
         return $this->description;
     }
 
-    public function setDescription(string $description): self
-    {
-        $this->description = $description;
-
-        return $this;
-    }
-
-    public function getCreatedAt(): ?\DateTimeImmutable
+    /**
+     * @return DateTimeImmutable
+     */
+    public function getCreatedAt(): DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $createdAt): self
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?\DateTimeImmutable
+    /**
+     * @return DateTimeImmutable
+     */
+    public function getUpdatedAt(): DateTimeImmutable
     {
         return $this->updatedAt;
     }
 
-    public function setUpdatedAt(\DateTimeImmutable $updatedAt): self
+    /**
+     * @param string $newTitle
+     * @throws \Exception
+     */
+    public function changeTitle(string $newTitle): void
     {
-        $this->updatedAt = $updatedAt;
+        $this->title = $newTitle;
 
-        return $this;
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
+    /**
+     * @param string $newDescription
+     * @throws \Exception
+     */
+    public function changeDescription(string $newDescription): void
+    {
+        $this->description = $newDescription;
+
+        $this->updatedAt = new DateTimeImmutable();
     }
 }

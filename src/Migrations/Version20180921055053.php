@@ -8,7 +8,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20180914113140 extends AbstractMigration
+final class Version20180921055053 extends AbstractMigration
 {
     public function up(Schema $schema) : void
     {
@@ -19,17 +19,8 @@ final class Version20180914113140 extends AbstractMigration
         );
 
         $this->addSql('
-            CREATE TABLE todo (
-                id INT AUTO_INCREMENT NOT NULL,
-                title VARCHAR(255) NOT NULL,
-                description LONGTEXT NOT NULL,
-                created_at DATETIME NOT NULL COMMENT \'(DC2Type:datetimetz_immutable)\',
-                updated_at DATETIME NOT NULL COMMENT \'(DC2Type:datetimetz_immutable)\',
-                PRIMARY KEY(id)
-            )
-            DEFAULT CHARACTER SET utf8mb4
-            COLLATE utf8mb4_unicode_ci
-            ENGINE = InnoDB
+            ALTER TABLE todo
+            MODIFY COLUMN id INT NOT NULL
         ');
     }
 
@@ -41,6 +32,9 @@ final class Version20180914113140 extends AbstractMigration
             'Migration can only be executed safely on \'mysql\'.'
         );
 
-        $this->addSql('DROP TABLE todo');
+        $this->addSql('
+            ALTER TABLE todo
+            MODIFY COLUMN id INT AUTOINCREMENT NOT NULL
+        ');
     }
 }

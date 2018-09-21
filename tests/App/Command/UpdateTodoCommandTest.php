@@ -1,0 +1,70 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\App\Command;
+
+use App\Command\UpdateTodoCommand;
+use App\Entity\TodoId;
+use PHPUnit\Framework\TestCase;
+
+class UpdateTodoCommandTest extends TestCase
+{
+    private const EXPECTED_TITLE = 'Some title';
+
+    private const EXPECTED_DESCRIPTION = 'Some description';
+
+    /**
+     * @var \App\Entity\TodoId
+     */
+    private $expectedId;
+
+    /**
+     * @throws \Exception
+     */
+    protected function setUp()
+    {
+        parent::setUp();
+
+        $this->expectedId = TodoId::fromInteger(1);
+    }
+
+    public function testGetId()
+    {
+        $command = $this->createCommand();
+
+        $this->assertSame(
+            $this->expectedId,
+            $command->getId()
+        );
+    }
+
+    public function testGetTitle()
+    {
+        $command = $this->createCommand();
+
+        $this->assertSame(
+            self::EXPECTED_TITLE,
+            $command->getTitle()
+        );
+    }
+
+    public function testGetDescription()
+    {
+        $command = $this->createCommand();
+
+        $this->assertSame(
+            self::EXPECTED_DESCRIPTION,
+            $command->getDescription()
+        );
+    }
+
+    private function createCommand(): UpdateTodoCommand
+    {
+        return new UpdateTodoCommand(
+            $this->expectedId,
+            self::EXPECTED_TITLE,
+            self::EXPECTED_DESCRIPTION
+        );
+    }
+}

@@ -28,3 +28,13 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    app.command_handler.create_todo_handler:
+        class: App\CommandHandler\CreateTodoCommandHandler
+        tags:
+            - { name: tactician.handler, command: App\Command\CreateTodoCommand }
+
+    app.command_handler.update_todo_handler:
+        class: App\CommandHandler\UpdateTodoCommandHandler
+        tags:
+        - { name: tactician.handler, command: App\Command\UpdateTodoCommand }

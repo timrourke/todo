@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Functional;
 
 use App\Entity\Todo;
+use App\Entity\TodoId;
 use App\Serializer\TodoJsonSerializer;
 use DateTimeImmutable;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -29,6 +32,7 @@ class TodoControllerTest extends WebTestCase
 
     /**
      * @test
+     * @throws \Doctrine\DBAL\DBALException
      */
     public function shouldGetOneTodo()
     {
@@ -134,12 +138,17 @@ class TodoControllerTest extends WebTestCase
 
     /**
      * @test
+     * @throws \Exception
      */
     public function shouldCreateTodo()
     {
-        $todo = new Todo();
-        $todo->setTitle('Some title');
-        $todo->setDescription('Some description');
+        $todo = new Todo(
+            TodoId::fromInteger(1),
+            'Some title',
+            'Some description',
+            new DateTimeImmutable(),
+            new DateTimeImmutable()
+        );
 
         $client = static::createClient();
 
@@ -154,7 +163,7 @@ class TodoControllerTest extends WebTestCase
             json_encode($payload)
         );
 
-        $this->assertSame(200, $client->getResponse()->getStatusCode());
+        $this->assertSame(201, $client->getResponse()->getStatusCode());
 
         $todos = $this->connection->fetchAll(
             'SELECT id, title, description FROM todo'
@@ -163,9 +172,9 @@ class TodoControllerTest extends WebTestCase
         $this->assertSame(
             [
                 [
-                    'id' => '1',
+                    'id' => $this->connection->fetchColumn('SELECT MAX(id) FROM todo_id'),
                     'title' => 'Some title',
-                    'description' => 'Some description'
+                    'description' => 'Some description',
                 ],
             ],
             $todos
@@ -219,20 +228,24 @@ class TodoControllerTest extends WebTestCase
         );
 
         $response = $client->getResponse();
-        $responseBody = json_decode($response->getContent(), true);
 
         $this->assertSame(200, $response->getStatusCode());
 
-        $this->assertArrayHasKey('todo', $responseBody);
+        $updatedTodo = $this->connection->fetchAll('SELECT * FROM todo WHERE id = 1');
+
+        $this->assertSame(
+            $requestData['todo']['id'],
+            (int) $updatedTodo[0]['id']
+        );
 
         $this->assertSame(
             $requestData['todo']['title'],
-            $responseBody['todo']['title']
+            $updatedTodo[0]['title']
         );
 
         $this->assertSame(
             $requestData['todo']['description'],
-            $responseBody['todo']['description']
+            $updatedTodo[0]['description']
         );
 
         $this->assertSame(
@@ -241,8 +254,8 @@ class TodoControllerTest extends WebTestCase
                 $requestData['todo']['createdAt']
             )->getTimestamp(),
             DateTimeImmutable::createFromFormat(
-                DateTimeImmutable::ATOM,
-                $responseBody['todo']['createdAt']
+                'Y-m-d H:i:s',
+                $updatedTodo[0]['created_at']
             )->getTimestamp()
         );
 
@@ -252,8 +265,8 @@ class TodoControllerTest extends WebTestCase
                 $requestData['todo']['updatedAt']
             )->getTimestamp(),
             DateTimeImmutable::createFromFormat(
-                DateTimeImmutable::ATOM,
-                $responseBody['todo']['updatedAt']
+                'Y-m-d H:i:s',
+                $updatedTodo[0]['updated_at']
             )->getTimestamp()
         );
     }

@@ -3,6 +3,7 @@
 namespace App\Tests\App\Services;
 
 use App\Entity\Todo;
+use App\Entity\TodoId;
 use App\Repository\TodoRepository;
 use App\Service\TodoService;
 use DateInterval;
@@ -32,12 +33,19 @@ class TodoServiceTest extends TestCase
 
     /**
      * @test
+     * @throws \Exception
      */
     public function shouldFindTodo()
     {
         $expectedId = 1;
 
-        $todo = new Todo();
+        $todo = new Todo(
+            TodoId::fromInteger($expectedId),
+            'Clean windows',
+            'The windows are super dirty',
+            new DateTimeImmutable(),
+            new DateTimeImmutable()
+        );
 
         $this->repoMock->expects($this->once())
             ->method('find')
@@ -56,6 +64,7 @@ class TodoServiceTest extends TestCase
 
     /**
      * @test
+     * @throws \Exception
      */
     public function shouldFindPageOfTodos()
     {
@@ -68,7 +77,13 @@ class TodoServiceTest extends TestCase
         ];
 
         $todos = [
-            new Todo()
+            new Todo(
+                TodoId::fromInteger(5),
+                'Get more socks',
+                'Gotta wear socks',
+                new DateTimeImmutable(),
+                new DateTimeImmutable()
+            ),
         ];
 
         $this->repoMock->expects($this->once())
@@ -92,56 +107,24 @@ class TodoServiceTest extends TestCase
      */
     public function shouldCreateTodo()
     {
-        $expectedTitle = 'Important task';
-        $expectedDescription = 'Need to do something important!';
-
-        $service = new TodoService($this->entityManagerMock, $this->repoMock);
-
-        $newTodo = new Todo();
-        $newTodo->setTitle($expectedTitle);
-        $newTodo->setDescription($expectedDescription);
-
-        $todo = $service->createTodo($newTodo);
-
-        $this->assertSame(
-            $expectedTitle,
-            $todo->getTitle()
+        $newTodo = new Todo(
+            TodoId::fromInteger(45),
+            'Clean car',
+            'Good lord this ride is filthy',
+            new DateTimeImmutable(),
+            new DateTimeImmutable()
         );
-
-        $this->assertSame(
-            $expectedDescription,
-            $todo->getDescription()
-        );
-
-        $this->assertGreaterThanOrEqual(
-            (new DateTimeImmutable())->getTimestamp(),
-            $todo->getCreatedAt()->getTimestamp()
-        );
-
-        $this->assertGreaterThanOrEqual(
-            (new DateTimeImmutable())->getTimestamp(),
-            $todo->getUpdatedAt()->getTimestamp()
-        );
-    }
-
-    /**
-     * @test
-     * @throws \Exception
-     */
-    public function shouldPersistCreatedTodo()
-    {
-        $todo = new Todo();
 
         $this->entityManagerMock->expects($this->once())
             ->method('persist')
-            ->with($todo);
+            ->with($newTodo);
 
         $this->entityManagerMock->expects($this->once())
             ->method('flush');
 
         $service = new TodoService($this->entityManagerMock, $this->repoMock);
 
-        $service->createTodo($todo);
+        $service->createTodo($newTodo);
     }
 
     /**
@@ -150,59 +133,64 @@ class TodoServiceTest extends TestCase
      */
     public function shouldUpdateTodo()
     {
-        $newTitle = 'New title';
-        $newDescription = 'New description';
-        $originalCreatedAt = (new DateTimeImmutable())->sub(new DateInterval('P1D'));
-        $originalUpdatedAt = (new DateTimeImmutable())->sub(new DateInterval('P1D'));
+        $originalTodo = new Todo(
+            TodoId::fromInteger(823),
+            'Original Title',
+            'Some description',
+            new DateTimeImmutable(),
+            new DateTimeImmutable()
+        );
 
-        $todo = new Todo();
-
-        $todo->setTitle('Original title');
-        $todo->setDescription('Original description');
-        $todo->setCreatedAt($originalCreatedAt);
-        $todo->setUpdatedAt($originalUpdatedAt);
-
-        $todoWithNewData = new Todo();
-        $todoWithNewData->setTitle($newTitle);
-        $todoWithNewData->setDescription($newDescription);
+        $todoWithUpdatedData = new Todo(
+            TodoId::fromInteger(823),
+            'New title',
+            'New description',
+            new DateTimeImmutable(),
+            new DateTimeImmutable()
+        );
 
         $this->repoMock->expects($this->once())
             ->method('find')
-            ->willReturn($todo);
+            ->with($originalTodo->getId()->asInt())
+            ->willReturn($originalTodo);
+
+        $this->entityManagerMock->expects($this->once())
+            ->method('persist')
+            ->with($originalTodo);
+
+        $this->entityManagerMock->expects($this->once())
+            ->method('flush');
 
         $service = new TodoService($this->entityManagerMock, $this->repoMock);
 
-        $service->updateTodo(1, $todoWithNewData);
+        $service->updateTodo($todoWithUpdatedData);
 
         $this->assertSame(
-            $newTitle,
-            $todo->getTitle()
+            $todoWithUpdatedData->getTitle(),
+            $originalTodo->getTitle()
         );
 
         $this->assertSame(
-            $newDescription,
-            $todo->getDescription()
-        );
-
-        $this->assertSame(
-            $originalCreatedAt->getTimestamp(),
-            $todo->getCreatedAt()->getTimestamp()
-        );
-
-        $this->assertGreaterThan(
-            $originalUpdatedAt->getTimestamp(),
-            $todo->getUpdatedAt()->getTimestamp()
+            $todoWithUpdatedData->getDescription(),
+            $originalTodo->getDescription()
         );
     }
 
     /**
      * @test
+     * @throws \Exception
      */
     public function shouldDeleteTodo()
     {
         $expectedId = 1;
 
-        $todo = new Todo();
+        $todo = new Todo(
+            TodoId::fromInteger($expectedId),
+            'Some todo',
+            'Some description',
+            new DateTimeImmutable(),
+            new DateTimeImmutable()
+        );
 
         $this->repoMock->expects($this->once())
             ->method('find')
