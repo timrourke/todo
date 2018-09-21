@@ -180,6 +180,40 @@ class TodoServiceTest extends TestCase
      * @test
      * @throws \Exception
      */
+    public function shouldThrowIfUpdatedTodoDoesNotExist()
+    {
+        $expectedId = 823;
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage(
+            sprintf(
+                'No Todo found by ID %d',
+                $expectedId
+            )
+        );
+
+        $todo = new Todo(
+            TodoId::fromInteger($expectedId),
+            'Some Title',
+            'Some description',
+            new DateTimeImmutable(),
+            new DateTimeImmutable()
+        );
+
+        $this->repoMock->expects($this->once())
+            ->method('find')
+            ->with($todo->getId()->asInt())
+            ->willReturn(null);
+
+        $service = new TodoService($this->entityManagerMock, $this->repoMock);
+
+        $service->updateTodo($todo);
+    }
+
+    /**
+     * @test
+     * @throws \Exception
+     */
     public function shouldDeleteTodo()
     {
         $expectedId = 1;
