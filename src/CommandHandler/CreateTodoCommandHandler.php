@@ -24,12 +24,11 @@ class CreateTodoCommandHandler
     /**
      * @param \App\Command\CreateTodoCommand $createTodoCommand
      * @throws \Exception
-     * @throws \Doctrine\DBAL\DBALException
      */
     public function handle(CreateTodoCommand $createTodoCommand): void
     {
         $newTodo = new Todo(
-            $this->todoService->nextIdentity(),
+            $createTodoCommand->getId(),
             $createTodoCommand->getTitle(),
             $createTodoCommand->getDescription(),
             new DateTimeImmutable(),
