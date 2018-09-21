@@ -1,3 +1,5 @@
+.idea
+/coverage
 
 ###> symfony/framework-bundle ###
 /.env
