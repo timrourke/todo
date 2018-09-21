@@ -4,31 +4,37 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\UuidInterface;
 
-/**
- * @ORM\Entity()
- */
 class TodoId
 {
     /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
+     * @var \Ramsey\Uuid\UuidInterface
      */
     private $id;
 
-    private function __construct(int $id)
+    private function __construct(UuidInterface $id)
     {
         $this->id = $id;
     }
 
-    public static function fromInteger(int $id): TodoId
+    public static function fromUuidString(string $uuidString): TodoId
     {
-        return new self($id);
+        return new self(Uuid::fromString($uuidString));
     }
 
-    public function asInt(): int
+    public static function fromUuid(UuidInterface $uuid): TodoId
+    {
+        return new self($uuid);
+    }
+
+    public function asString(): string
+    {
+        return $this->id->toString();
+    }
+
+    public function asUuid(): UuidInterface
     {
         return $this->id;
     }

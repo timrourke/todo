@@ -21,18 +21,4 @@ class TodoRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Todo::class);
     }
-
-    /**
-     * @return \App\Entity\TodoId
-     * @throws \Doctrine\DBAL\DBALException
-     */
-    public function nextIdentity(): TodoId
-    {
-        $conn = $this->getEntityManager()->getConnection();
-        $conn->insert('todo_id', ['id' => null]);
-
-        $lastInsertedId = (int) $conn->lastInsertId();
-
-        return TodoId::fromInteger($lastInsertedId);
-    }
 }

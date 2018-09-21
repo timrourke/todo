@@ -13,9 +13,11 @@ use Doctrine\ORM\Mapping as ORM;
 class Todo
 {
     /**
+     * @var \Ramsey\Uuid\UuidInterface
+     *
      * @ORM\Id()
+     * @ORM\Column(type="uuid", unique=true)
      * @ORM\GeneratedValue(strategy="NONE")
-     * @ORM\Column(type="integer")
      */
     private $id;
 
@@ -46,7 +48,7 @@ class Todo
         DateTimeImmutable $createdAt,
         DateTimeImmutable $updatedAt
     ) {
-        $this->id = $todoId->asInt();
+        $this->id = $todoId->asUuid();
         $this->title = $title;
         $this->description = $description;
         $this->createdAt = $createdAt;
@@ -58,7 +60,7 @@ class Todo
      */
     public function getId(): TodoId
     {
-        return TodoId::fromInteger($this->id);
+        return TodoId::fromUuid($this->id);
     }
 
     /**

@@ -6,10 +6,10 @@ use App\Entity\Todo;
 use App\Entity\TodoId;
 use App\Repository\TodoRepository;
 use App\Service\TodoService;
-use DateInterval;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManager;
 use PHPUnit\Framework\TestCase;
+use Ramsey\Uuid\Uuid;
 
 class TodoServiceTest extends TestCase
 {
@@ -37,10 +37,10 @@ class TodoServiceTest extends TestCase
      */
     public function shouldFindTodo()
     {
-        $expectedId = 1;
+        $expectedId = Uuid::uuid1()->toString();
 
         $todo = new Todo(
-            TodoId::fromInteger($expectedId),
+            TodoId::fromUuidString($expectedId),
             'Clean windows',
             'The windows are super dirty',
             new DateTimeImmutable(),
@@ -68,6 +68,7 @@ class TodoServiceTest extends TestCase
      */
     public function shouldFindPageOfTodos()
     {
+        $expectedId = Uuid::uuid1()->toString();
         $expectedOffset = 8;
         $expectedArgs = [
             [],
@@ -78,7 +79,7 @@ class TodoServiceTest extends TestCase
 
         $todos = [
             new Todo(
-                TodoId::fromInteger(5),
+                TodoId::fromUuidString($expectedId),
                 'Get more socks',
                 'Gotta wear socks',
                 new DateTimeImmutable(),
@@ -107,8 +108,10 @@ class TodoServiceTest extends TestCase
      */
     public function shouldCreateTodo()
     {
+        $expectedId = Uuid::uuid1()->toString();
+
         $newTodo = new Todo(
-            TodoId::fromInteger(45),
+            TodoId::fromUuidString($expectedId),
             'Clean car',
             'Good lord this ride is filthy',
             new DateTimeImmutable(),
@@ -133,8 +136,10 @@ class TodoServiceTest extends TestCase
      */
     public function shouldUpdateTodo()
     {
+        $expectedId = Uuid::uuid1()->toString();
+
         $originalTodo = new Todo(
-            TodoId::fromInteger(823),
+            TodoId::fromUuidString($expectedId),
             'Original Title',
             'Some description',
             new DateTimeImmutable(),
@@ -142,7 +147,7 @@ class TodoServiceTest extends TestCase
         );
 
         $todoWithUpdatedData = new Todo(
-            TodoId::fromInteger(823),
+            TodoId::fromUuidString($expectedId),
             'New title',
             'New description',
             new DateTimeImmutable(),
@@ -151,7 +156,7 @@ class TodoServiceTest extends TestCase
 
         $this->repoMock->expects($this->once())
             ->method('find')
-            ->with($originalTodo->getId()->asInt())
+            ->with($originalTodo->getId()->asString())
             ->willReturn($originalTodo);
 
         $this->entityManagerMock->expects($this->once())
@@ -182,7 +187,7 @@ class TodoServiceTest extends TestCase
      */
     public function shouldThrowIfUpdatedTodoDoesNotExist()
     {
-        $expectedId = 823;
+        $expectedId = Uuid::uuid1()->toString();
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage(
@@ -193,7 +198,7 @@ class TodoServiceTest extends TestCase
         );
 
         $todo = new Todo(
-            TodoId::fromInteger($expectedId),
+            TodoId::fromUuidString($expectedId),
             'Some Title',
             'Some description',
             new DateTimeImmutable(),
@@ -202,7 +207,7 @@ class TodoServiceTest extends TestCase
 
         $this->repoMock->expects($this->once())
             ->method('find')
-            ->with($todo->getId()->asInt())
+            ->with($todo->getId()->asString())
             ->willReturn(null);
 
         $service = new TodoService($this->entityManagerMock, $this->repoMock);
@@ -216,10 +221,10 @@ class TodoServiceTest extends TestCase
      */
     public function shouldDeleteTodo()
     {
-        $expectedId = 1;
+        $expectedId = Uuid::uuid1()->toString();
 
         $todo = new Todo(
-            TodoId::fromInteger($expectedId),
+            TodoId::fromUuidString($expectedId),
             'Some todo',
             'Some description',
             new DateTimeImmutable(),
@@ -248,7 +253,7 @@ class TodoServiceTest extends TestCase
      */
     public function shouldDoNothingIfDeletedTodoDoesNotExist()
     {
-        $expectedId = 1;
+        $expectedId = Uuid::uuid1()->toString();
 
         $this->repoMock->expects($this->once())
             ->method('find')

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Todo;
-use App\Entity\TodoId;
 use App\Repository\TodoRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use RuntimeException;
@@ -37,10 +36,10 @@ class TodoService
     }
 
     /**
-     * @param int $id
+     * @param string $id
      * @return \App\Entity\Todo
      */
-    public function findTodo(int $id): Todo
+    public function findTodo(string $id): Todo
     {
         return $this->repo->find($id);
     }
@@ -75,13 +74,13 @@ class TodoService
      */
     public function updateTodo(Todo $todoWithNewData): void
     {
-        $todo = $this->repo->find($todoWithNewData->getId()->asInt());
+        $todo = $this->repo->find($todoWithNewData->getId()->asString());
 
         if (!$todo) {
             throw new RuntimeException(
                 sprintf(
                     'No Todo found by ID %d',
-                    $todoWithNewData->getId()->asInt()
+                    $todoWithNewData->getId()->asString()
                 )
             );
         }
@@ -94,9 +93,9 @@ class TodoService
     }
 
     /**
-     * @param int $id
+     * @param string $id
      */
-    public function deleteTodo(int $id): void
+    public function deleteTodo(string $id): void
     {
         $todo = $this->repo->find($id);
 
@@ -107,14 +106,5 @@ class TodoService
 
         $this->entityManager->remove($todo);
         $this->entityManager->flush();
-    }
-
-    /**
-     * @return \App\Entity\TodoId
-     * @throws \Doctrine\DBAL\DBALException
-     */
-    public function nextIdentity(): TodoId
-    {
-        return $this->repo->nextIdentity();
     }
 }

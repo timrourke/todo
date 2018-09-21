@@ -11,6 +11,7 @@ use App\Entity\TodoId;
 use App\Service\TodoService;
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
+use Ramsey\Uuid\Uuid;
 
 class CreateTodoCommandHandlerTest extends TestCase
 {
@@ -30,8 +31,8 @@ class CreateTodoCommandHandlerTest extends TestCase
             ->method('createTodo')
             ->willReturnCallback(function (Todo $todo) use ($command) {
                 $this->assertSame(
-                    $command->getId()->asInt(),
-                    $todo->getId()->asInt()
+                    $command->getId()->asString(),
+                    $todo->getId()->asString()
                 );
 
                 $this->assertSame(
@@ -62,8 +63,10 @@ class CreateTodoCommandHandlerTest extends TestCase
 
     private function createCommand(): CreateTodoCommand
     {
+        $uuidString = Uuid::uuid1()->toString();
+
         return new CreateTodoCommand(
-            TodoId::fromInteger(1),
+            TodoId::fromUuidString($uuidString),
             '',
             ''
         );

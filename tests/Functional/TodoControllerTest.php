@@ -8,6 +8,9 @@ use App\Entity\Todo;
 use App\Entity\TodoId;
 use App\Serializer\TodoJsonSerializer;
 use DateTimeImmutable;
+use Ramsey\Uuid\Builder\DefaultUuidBuilder;
+use Ramsey\Uuid\Doctrine\UuidBinaryOrderedTimeType;
+use Ramsey\Uuid\Uuid;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class TodoControllerTest extends WebTestCase
@@ -36,7 +39,8 @@ class TodoControllerTest extends WebTestCase
      */
     public function shouldGetOneTodo()
     {
-        $expectedId = 8;
+        $uuid = Uuid::uuid1();
+        $expectedId = $uuid->toString();
         $expectedTitle = 'Neat todo';
         $expectedDescription = 'This todo is neat';
         $expectedCreatedAt = DateTimeImmutable::createFromFormat(
@@ -59,7 +63,7 @@ class TodoControllerTest extends WebTestCase
             )
             VALUES
             (
-              {$expectedId},
+              '{$expectedId}',
               '{$expectedTitle}',
               '{$expectedDescription}',
               '{$expectedCreatedAt->format('Y-m-d H:i:s')}',
@@ -71,7 +75,7 @@ class TodoControllerTest extends WebTestCase
 
         $client->request(
             'GET',
-            '/todos/' . $expectedId
+            '/todos/' . $uuid->toString()
         );
 
         $response = $client->getResponse();
@@ -99,9 +103,12 @@ class TodoControllerTest extends WebTestCase
     public function shouldGetManyTodos()
     {
         for ($i = 0; $i < 20; $i++) {
+            $uuidString = Uuid::uuid1()->toString();
+
             $this->connection->exec("
               INSERT INTO todo
               (
+                id,
                 title,
                 description,
                 created_at,
@@ -109,6 +116,7 @@ class TodoControllerTest extends WebTestCase
               )
               VALUES
               (
+                '$uuidString',
                 'Some todo',
                 'Some description',
                 '2012-01-02 09:12:45',
@@ -143,7 +151,7 @@ class TodoControllerTest extends WebTestCase
     public function shouldCreateTodo()
     {
         $todo = new Todo(
-            TodoId::fromInteger(1),
+            TodoId::fromUuid(Uuid::uuid1()),
             'Some title',
             'Some description',
             new DateTimeImmutable(),
@@ -172,7 +180,7 @@ class TodoControllerTest extends WebTestCase
         $this->assertSame(
             [
                 [
-                    'id' => $this->connection->fetchColumn('SELECT MAX(id) FROM todo_id'),
+                    'id' => $todo->getId()->asString(),
                     'title' => 'Some title',
                     'description' => 'Some description',
                 ],
@@ -187,9 +195,11 @@ class TodoControllerTest extends WebTestCase
      */
     public function shouldUpdateExistingTodo()
     {
+        $uuidString = Uuid::uuid1()->toString();
+
         $requestData = [
             'todo' => [
-                'id' => 1,
+                'id' => $uuidString,
                 'title' => 'New title',
                 'description' => 'New description',
                 'createdAt' => '2012-01-12T07:34:09Z',
@@ -208,7 +218,7 @@ class TodoControllerTest extends WebTestCase
             )
             VALUES
             (
-              1,
+              '$uuidString',
               'Some title',
               'Some description',
               '2012-01-12 07:34:09',
@@ -220,7 +230,7 @@ class TodoControllerTest extends WebTestCase
 
         $client->request(
             'PUT',
-            '/todos/1',
+            '/todos/' . $uuidString,
             [],
             [],
             [],
@@ -231,11 +241,12 @@ class TodoControllerTest extends WebTestCase
 
         $this->assertSame(200, $response->getStatusCode());
 
-        $updatedTodo = $this->connection->fetchAll('SELECT * FROM todo WHERE id = 1');
+        $updatedTodo = $this->connection
+            ->fetchAll("SELECT * FROM todo WHERE id = '$uuidString'");
 
         $this->assertSame(
             $requestData['todo']['id'],
-            (int) $updatedTodo[0]['id']
+            $updatedTodo[0]['id']
         );
 
         $this->assertSame(
@@ -277,6 +288,8 @@ class TodoControllerTest extends WebTestCase
      */
     public function shouldDeleteTodo()
     {
+        $uuidString = Uuid::uuid1()->toString();
+
         $this->connection->exec("
             INSERT INTO todo
             (
@@ -287,7 +300,7 @@ class TodoControllerTest extends WebTestCase
               updated_at
             )
             VALUES (
-              2,
+              '$uuidString',
               'A title',
               'A description',
               '2015-01-01 08:12:15',
@@ -299,7 +312,7 @@ class TodoControllerTest extends WebTestCase
 
         $client->request(
             'DELETE',
-            '/todos/2'
+            '/todos/' . $uuidString
         );
 
         $response = $client->getResponse();
@@ -308,7 +321,8 @@ class TodoControllerTest extends WebTestCase
 
         $this->assertSame('{}', $response->getContent());
 
-        $foundTodos = $this->connection->fetchAll('SELECT * FROM todo WHERE id = 2');
+        $foundTodos = $this->connection
+            ->fetchAll("SELECT * FROM todo WHERE id = '$uuidString'");
 
         $this->assertSame([], $foundTodos);
     }
@@ -318,9 +332,11 @@ class TodoControllerTest extends WebTestCase
      */
     public function shouldNotThrowErrorWhenDeletingNonExistentTodo()
     {
+        $uuidString = Uuid::uuid1()->toString();
+
         $client = static::createClient();
 
-        $client->request('DELETE', '/todos/4362346');
+        $client->request('DELETE', '/todos/' . $uuidString);
 
         $this->assertSame(200, $client->getResponse()->getStatusCode());
     }

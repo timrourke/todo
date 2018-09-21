@@ -12,6 +12,7 @@ use App\Service\TodoService;
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 use League\Tactician\CommandBus;
+use Ramsey\Uuid\Uuid;
 use Symfony\Component\DependencyInjection\Container;
 
 class TodoControllerTest extends TestCase
@@ -85,10 +86,12 @@ class TodoControllerTest extends TestCase
      */
     public function shouldGetOne()
     {
-        $expectedId = 1;
+        $uuidString = Uuid::uuid1()->toString();
+
+        $expectedId = TodoId::fromUuidString($uuidString);
 
         $expectedTodo = new Todo(
-            TodoId::fromInteger(1),
+            $expectedId,
             'Wash dishes',
             'Gotta wash the dishes!',
             new DateTimeImmutable(),
@@ -97,10 +100,10 @@ class TodoControllerTest extends TestCase
 
         $this->todoServiceMock->expects($this->once())
             ->method('findTodo')
-            ->with($expectedId)
+            ->with($uuidString)
             ->willReturn($expectedTodo);
 
-        $actual = $this->controller->getOne($expectedId);
+        $actual = $this->controller->getOne($uuidString);
 
         $this->assertSame(
             json_encode([

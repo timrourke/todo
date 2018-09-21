@@ -7,6 +7,7 @@ use App\Entity\TodoId;
 use App\Serializer\TodoJsonSerializer;
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
+use Ramsey\Uuid\Uuid;
 
 class TodoJsonSerializerTest extends TestCase
 {
@@ -41,7 +42,7 @@ class TodoJsonSerializerTest extends TestCase
     protected function setUp()
     {
         parent::setUp();
-        $this->expectedId = 46;
+        $this->expectedId = Uuid::uuid1()->toString();
         $this->expectedTitle = 'Some title';
         $this->expectedDescription = 'Some description';
         $this->expectedCreatedAt = new DateTimeImmutable();
@@ -105,7 +106,7 @@ class TodoJsonSerializerTest extends TestCase
     private function getTodo(): Todo
     {
         return new Todo(
-            TodoId::fromInteger($this->expectedId),
+            TodoId::fromUuidString($this->expectedId),
             $this->expectedTitle,
             $this->expectedDescription,
             $this->expectedCreatedAt,

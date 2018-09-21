@@ -7,6 +7,7 @@ namespace App\Tests\App\Command;
 use App\Command\UpdateTodoCommand;
 use App\Entity\TodoId;
 use PHPUnit\Framework\TestCase;
+use Ramsey\Uuid\Uuid;
 
 class UpdateTodoCommandTest extends TestCase
 {
@@ -26,7 +27,9 @@ class UpdateTodoCommandTest extends TestCase
     {
         parent::setUp();
 
-        $this->expectedId = TodoId::fromInteger(1);
+        $uuidString = Uuid::uuid1()->toString();
+
+        $this->expectedId = TodoId::fromUuidString($uuidString);
     }
 
     public function testGetId()

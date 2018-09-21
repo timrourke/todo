@@ -6,7 +6,6 @@ namespace App\Controller;
 
 use App\Command\CreateTodoCommand;
 use App\Command\UpdateTodoCommand;
-use App\Deserializer\TodoJsonDeserializer;
 use App\Entity\TodoId;
 use App\Serializer\TodoJsonSerializer;
 use App\Service\TodoService;
@@ -60,7 +59,7 @@ class TodoController extends AbstractController
      * @param int $id
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function getOne(int $id)
+    public function getOne(string $id)
     {
         $todo = $this->todoService->findTodo($id);
 
@@ -81,7 +80,7 @@ class TodoController extends AbstractController
         $data = json_decode($json, true);
 
         $command = new CreateTodoCommand(
-            $this->todoService->nextIdentity(),
+            TodoId::fromUuidString($data['todo']['id']),
             $data['todo']['title'],
             $data['todo']['description']
         );
@@ -97,17 +96,17 @@ class TodoController extends AbstractController
     /**
      * @Route("/todos/{id}", methods={"PUT"})
      * @param \Symfony\Component\HttpFoundation\Request $request
-     * @param int $id
+     * @param string $id
      * @return \Symfony\Component\HttpFoundation\Response
      * @throws \Exception
      */
-    public function update(Request $request, int $id)
+    public function update(Request $request, string $id)
     {
         $json = $request->getContent();
         $data = json_decode($json, true);
 
         $command = new UpdateTodoCommand(
-            TodoId::fromInteger($id),
+            TodoId::fromUuidString($id),
             $data['todo']['title'],
             $data['todo']['description']
         );
@@ -122,10 +121,10 @@ class TodoController extends AbstractController
 
     /**
      * @Route("/todos/{id}", methods={"DELETE"})
-     * @param int $id
+     * @param string $id
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function delete(int $id)
+    public function delete(string $id)
     {
         $this->todoService->deleteTodo($id);
 
