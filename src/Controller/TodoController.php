@@ -10,7 +10,9 @@ use App\Entity\TodoId;
 use App\Serializer\TodoJsonSerializer;
 use App\Service\TodoService;
 use League\Tactician\CommandBus;
+use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -44,8 +46,9 @@ class TodoController extends AbstractController
 
     /**
      * @Route("/todos", methods={"GET"})
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function getList()
+    public function getList(): JsonResponse
     {
         $todos = $this->todoService->findPageOfTodos(0);
 
@@ -56,16 +59,23 @@ class TodoController extends AbstractController
 
     /**
      * @Route("/todos/{id}", methods={"GET"})
-     * @param int $id
+     * @param string $id
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function getOne(string $id)
+    public function getOne(string $id): JsonResponse
     {
-        $todo = $this->todoService->findTodo($id);
+        try {
+            $todo = $this->todoService->findTodo($id);
 
-        return $this->json([
-            'todo' => $this->serializer->serializeOne($todo),
-        ]);
+            return $this->json([
+                'todo' => $this->serializer->serializeOne($todo),
+            ]);
+        } catch (RuntimeException $e) {
+            return $this->json(
+                [],
+                404
+            );
+        }
     }
 
     /**
@@ -74,7 +84,7 @@ class TodoController extends AbstractController
      * @return \Symfony\Component\HttpFoundation\Response
      * @throws \Exception
      */
-    public function create(Request $request)
+    public function create(Request $request): Response
     {
         $json = $request->getContent();
         $data = json_decode($json, true);
@@ -87,10 +97,7 @@ class TodoController extends AbstractController
 
         $this->commandBus->handle($command);
 
-        $response = new Response();
-        $response->setStatusCode(201);
-
-        return $response;
+        return new Response('', 201);
     }
 
     /**
@@ -100,7 +107,7 @@ class TodoController extends AbstractController
      * @return \Symfony\Component\HttpFoundation\Response
      * @throws \Exception
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, string $id): Response
     {
         $json = $request->getContent();
         $data = json_decode($json, true);
@@ -113,10 +120,7 @@ class TodoController extends AbstractController
 
         $this->commandBus->handle($command);
 
-        $response = new Response();
-        $response->setStatusCode(200);
-
-        return $response;
+        return new Response('', 200);
     }
 
     /**
@@ -124,7 +128,7 @@ class TodoController extends AbstractController
      * @param string $id
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function delete(string $id)
+    public function delete(string $id): JsonResponse
     {
         $this->todoService->deleteTodo($id);
 

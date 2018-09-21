@@ -38,10 +38,17 @@ class TodoService
     /**
      * @param string $id
      * @return \App\Entity\Todo
+     * @throws \RuntimeException
      */
     public function findTodo(string $id): Todo
     {
-        return $this->repo->find($id);
+        $todo = $this->repo->find($id);
+
+        if (!$todo) {
+            $this->throwNoTodoFoundException($id);
+        }
+
+        return $todo;
     }
 
     /**
@@ -77,11 +84,8 @@ class TodoService
         $todo = $this->repo->find($todoWithNewData->getId()->asString());
 
         if (!$todo) {
-            throw new RuntimeException(
-                sprintf(
-                    'No Todo found by ID %d',
-                    $todoWithNewData->getId()->asString()
-                )
+            $this->throwNoTodoFoundException(
+                $todoWithNewData->getId()->asString()
             );
         }
 
@@ -106,5 +110,16 @@ class TodoService
 
         $this->entityManager->remove($todo);
         $this->entityManager->flush();
+    }
+
+    /**
+     * @param string $id
+     * @throws \RuntimeException
+     */
+    private function throwNoTodoFoundException(string $id)
+    {
+        throw new RuntimeException(
+            sprintf('No Todo found by ID %d', $id)
+        );
     }
 }

@@ -106,9 +106,40 @@ class TodoControllerTest extends TestCase
         $actual = $this->controller->getOne($uuidString);
 
         $this->assertSame(
+            200,
+            $actual->getStatusCode()
+        );
+
+        $this->assertSame(
             json_encode([
                 'todo' => $this->serializer->serializeOne($expectedTodo),
             ]),
+            $actual->getContent()
+        );
+    }
+
+    /**
+     * @test
+     * @throws \Exception
+     */
+    public function shouldRender404WhenTodoDoesNotExist()
+    {
+        $uuidString = Uuid::uuid1()->toString();
+
+        $this->todoServiceMock->expects($this->once())
+            ->method('findTodo')
+            ->with($uuidString)
+            ->willThrowException(new \RuntimeException());
+
+        $actual = $this->controller->getOne($uuidString);
+
+        $this->assertSame(
+            404,
+            $actual->getStatusCode()
+        );
+
+        $this->assertSame(
+            json_encode([]),
             $actual->getContent()
         );
     }
