@@ -1,6 +1,8 @@
-# Value Objects By Example
+# Todo
 
-This simple application is designed to demonstrate value objects and how they are useful.
+[![Maintainability](https://api.codeclimate.com/v1/badges/f9344bdb890fff873fde/maintainability)](https://codeclimate.com/github/timrourke/todo/maintainability) [![Test Coverage](https://api.codeclimate.com/v1/badges/f9344bdb890fff873fde/test_coverage)](https://codeclimate.com/github/timrourke/todo/test_coverage)
+
+Another humble todo application over-engineered for kicks.
 
 ## Running locally with docker-compose
 
