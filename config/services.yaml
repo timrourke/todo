@@ -37,4 +37,12 @@ services:
     app.command_handler.update_todo_handler:
         class: App\CommandHandler\UpdateTodoCommandHandler
         tags:
-        - { name: tactician.handler, command: App\Command\UpdateTodoCommand }
+            - { name: tactician.handler, command: App\Command\UpdateTodoCommand }
+
+    Neomerx\JsonApi\Factories\Factory: ~
+
+    App\JsonApiResponder\JsonApiResponder:
+        arguments:
+            - '@Neomerx\JsonApi\Factories\Factory'
+            -
+                'App\Entity\Todo': '\App\JsonApiSchema\TodoSchema'

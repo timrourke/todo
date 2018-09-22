@@ -84,12 +84,18 @@ class TodoControllerTest extends WebTestCase
 
         $this->assertSame(
             [
-                'todo' => [
+                'data' => [
+                    'type' => 'todos',
                     'id' => $expectedId,
-                    'title' => $expectedTitle,
-                    'description' => $expectedDescription,
-                    'createdAt' => $expectedCreatedAt->format(DateTimeImmutable::ATOM),
-                    'updatedAt' => $expectedUpdatedAt->format(DateTimeImmutable::ATOM),
+                    'attributes' => [
+                        'title' => $expectedTitle,
+                        'description' => $expectedDescription,
+                        'created-at' => $expectedCreatedAt->format(DateTimeImmutable::ATOM),
+                        'updated-at' => $expectedUpdatedAt->format(DateTimeImmutable::ATOM),
+                    ],
+                    'links' => [
+                        'self' => '/todos/' . $expectedId,
+                    ],
                 ],
             ],
             json_decode($response->getContent(), true)
@@ -140,7 +146,7 @@ class TodoControllerTest extends WebTestCase
 
         $this->assertCount(
             20,
-            $json['todos']
+            $json['data']
         );
     }
 
@@ -171,7 +177,7 @@ class TodoControllerTest extends WebTestCase
             json_encode($payload)
         );
 
-        $this->assertSame(201, $client->getResponse()->getStatusCode());
+        $this->assertSame(204, $client->getResponse()->getStatusCode());
 
         $todos = $this->connection->fetchAll(
             'SELECT id, title, description FROM todo'
@@ -198,12 +204,15 @@ class TodoControllerTest extends WebTestCase
         $uuidString = Uuid::uuid1()->toString();
 
         $requestData = [
-            'todo' => [
+            'data' => [
                 'id' => $uuidString,
-                'title' => 'New title',
-                'description' => 'New description',
-                'createdAt' => '2012-01-12T07:34:09Z',
-                'updatedAt' => '2012-01-12T07:34:09Z',
+                'type' => 'todos',
+                'attributes' => [
+                    'title' => 'New title',
+                    'description' => 'New description',
+                    'created-at' => '2012-01-12T07:34:09Z',
+                    'updated-at' => '2012-01-12T07:34:09Z',
+                ],
             ],
         ];
 
@@ -229,7 +238,7 @@ class TodoControllerTest extends WebTestCase
         $client = static::createClient();
 
         $client->request(
-            'PUT',
+            'PATCH',
             '/todos/' . $uuidString,
             [],
             [],
@@ -239,30 +248,30 @@ class TodoControllerTest extends WebTestCase
 
         $response = $client->getResponse();
 
-        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(204, $response->getStatusCode());
 
         $updatedTodo = $this->connection
             ->fetchAll("SELECT * FROM todo WHERE id = '$uuidString'");
 
         $this->assertSame(
-            $requestData['todo']['id'],
+            $requestData['data']['id'],
             $updatedTodo[0]['id']
         );
 
         $this->assertSame(
-            $requestData['todo']['title'],
+            $requestData['data']['attributes']['title'],
             $updatedTodo[0]['title']
         );
 
         $this->assertSame(
-            $requestData['todo']['description'],
+            $requestData['data']['attributes']['description'],
             $updatedTodo[0]['description']
         );
 
         $this->assertSame(
             DateTimeImmutable::createFromFormat(
                 DateTimeImmutable::ATOM,
-                $requestData['todo']['createdAt']
+                $requestData['data']['attributes']['created-at']
             )->getTimestamp(),
             DateTimeImmutable::createFromFormat(
                 'Y-m-d H:i:s',
@@ -273,7 +282,7 @@ class TodoControllerTest extends WebTestCase
         $this->assertGreaterThan(
             DateTimeImmutable::createFromFormat(
                 DateTimeImmutable::ATOM,
-                $requestData['todo']['updatedAt']
+                $requestData['data']['attributes']['updated-at']
             )->getTimestamp(),
             DateTimeImmutable::createFromFormat(
                 'Y-m-d H:i:s',
@@ -317,9 +326,7 @@ class TodoControllerTest extends WebTestCase
 
         $response = $client->getResponse();
 
-        $this->assertSame(200, $response->getStatusCode());
-
-        $this->assertSame('{}', $response->getContent());
+        $this->assertSame(204, $response->getStatusCode());
 
         $foundTodos = $this->connection
             ->fetchAll("SELECT * FROM todo WHERE id = '$uuidString'");
@@ -338,6 +345,6 @@ class TodoControllerTest extends WebTestCase
 
         $client->request('DELETE', '/todos/' . $uuidString);
 
-        $this->assertSame(200, $client->getResponse()->getStatusCode());
+        $this->assertSame(204, $client->getResponse()->getStatusCode());
     }
 }

@@ -7,13 +7,15 @@ namespace App\Controller;
 use App\Command\CreateTodoCommand;
 use App\Command\UpdateTodoCommand;
 use App\Entity\TodoId;
-use App\Serializer\TodoJsonSerializer;
+use App\JsonApiError\NotFoundError;
+use App\JsonApiResponder\JsonApiResponder;
 use App\Service\TodoService;
 use Doctrine\DBAL\Types\ConversionException;
 use League\Tactician\CommandBus;
+use Neomerx\JsonApi\Document\Error;
+use Ramsey\Uuid\Exception\InvalidUuidStringException;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -26,54 +28,50 @@ class TodoController extends AbstractController
     private $todoService;
 
     /**
-     * @var \App\Serializer\TodoJsonSerializer
-     */
-    private $serializer;
-
-    /**
      * @var \League\Tactician\CommandBus
      */
     private $commandBus;
 
+    /**
+     * @var \App\JsonApiResponder\JsonApiResponder
+     */
+    private $responder;
+
     public function __construct(
         TodoService $todoService,
-        TodoJsonSerializer $serializer,
-        CommandBus $commandBus
+        CommandBus $commandBus,
+        JsonApiResponder $responder
     ) {
         $this->todoService = $todoService;
-        $this->serializer = $serializer;
         $this->commandBus = $commandBus;
+        $this->responder = $responder;
     }
 
     /**
      * @Route("/todos", methods={"GET"})
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function getList(): JsonResponse
+    public function getList(): Response
     {
         $todos = $this->todoService->findPageOfTodos(0);
 
-        return $this->json([
-            'todos' => $this->serializer->serializeMany($todos),
-        ]);
+        return $this->responder->getContentResponse($todos);
     }
 
     /**
      * @Route("/todos/{id}", methods={"GET"})
      * @param string $id
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function getOne(string $id): JsonResponse
+    public function getOne(string $id): Response
     {
         try {
             $todo = $this->todoService->findTodo($id);
 
-            return $this->json([
-                'todo' => $this->serializer->serializeOne($todo),
-            ]);
-        } catch (RuntimeException | ConversionException $e) {
-            return $this->json(
-                null,
+            return $this->responder->getContentResponse($todo);
+        } catch (RuntimeException | InvalidUuidStringException | ConversionException $e) {
+            return $this->responder->getErrorResponse(
+                NotFoundError::createForType('Todo', $id),
                 404
             );
         }
@@ -98,11 +96,11 @@ class TodoController extends AbstractController
 
         $this->commandBus->handle($command);
 
-        return new Response('', 201);
+        return $this->responder->getNoContentResponse();
     }
 
     /**
-     * @Route("/todos/{id}", methods={"PUT"})
+     * @Route("/todos/{id}", methods={"PATCH"})
      * @param \Symfony\Component\HttpFoundation\Request $request
      * @param string $id
      * @return \Symfony\Component\HttpFoundation\Response
@@ -110,29 +108,36 @@ class TodoController extends AbstractController
      */
     public function update(Request $request, string $id): Response
     {
-        $json = $request->getContent();
-        $data = json_decode($json, true);
+        try {
+            $json = $request->getContent();
+            $data = json_decode($json, true);
 
-        $command = new UpdateTodoCommand(
-            TodoId::fromUuidString($id),
-            $data['todo']['title'],
-            $data['todo']['description']
-        );
+            $command = new UpdateTodoCommand(
+                TodoId::fromUuidString($id),
+                $data['data']['attributes']['title'],
+                $data['data']['attributes']['description']
+            );
 
-        $this->commandBus->handle($command);
+            $this->commandBus->handle($command);
 
-        return new Response('', 200);
+            return $this->responder->getNoContentResponse();
+        } catch (RuntimeException | InvalidUuidStringException | ConversionException $e) {
+            return $this->responder->getErrorResponse(
+                NotFoundError::createForType('Todo', $id),
+                404
+            );
+        }
     }
 
     /**
      * @Route("/todos/{id}", methods={"DELETE"})
      * @param string $id
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function delete(string $id): JsonResponse
+    public function delete(string $id): Response
     {
         $this->todoService->deleteTodo($id);
 
-        return $this->json(new \stdClass());
+        return $this->responder->getNoContentResponse();
     }
 }

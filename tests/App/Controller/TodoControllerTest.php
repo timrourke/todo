@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\App\Controller;
 
+use App\Command\UpdateTodoCommand;
 use App\Controller\TodoController;
 use App\Entity\Todo;
 use App\Entity\TodoId;
+use App\JsonApiError\NotFoundError;
+use App\JsonApiResponder\JsonApiResponder;
 use App\Serializer\TodoJsonSerializer;
 use App\Service\TodoService;
 use DateTimeImmutable;
@@ -14,6 +17,8 @@ use PHPUnit\Framework\TestCase;
 use League\Tactician\CommandBus;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\DependencyInjection\Container;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class TodoControllerTest extends TestCase
 {
@@ -37,6 +42,11 @@ class TodoControllerTest extends TestCase
      */
     private $todoServiceMock;
 
+    /**
+     * @var \PHPUnit\Framework\MockObject\MockObject|\App\JsonApiResponder\JsonApiResponder
+     */
+    private $jsonapiResponderMock;
+
     protected function setUp()
     {
         parent::setUp();
@@ -49,10 +59,14 @@ class TodoControllerTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
 
+        $this->jsonapiResponderMock = $this->getMockBuilder(JsonApiResponder::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+
         $this->controller = new TodoController(
             $this->todoServiceMock,
-            new TodoJsonSerializer(),
-            $this->commandBusMock
+            $this->commandBusMock,
+            $this->jsonapiResponderMock
         );
 
         $this->serializer = new TodoJsonSerializer();
@@ -62,22 +76,31 @@ class TodoControllerTest extends TestCase
 
     /**
      * @test
+     * @throws \Exception
      */
     public function shouldGetList()
     {
+        $todos = [
+            new Todo(
+                TodoId::fromUuid(Uuid::uuid1()),
+                'Some todo',
+                'Some description',
+                new DateTimeImmutable(),
+                new DateTimeImmutable()
+            )
+        ];
+
         $this->todoServiceMock->expects($this->once())
             ->method('findPageOfTodos')
             ->with(0)
-            ->willReturn([]);
+            ->willReturn($todos);
 
-        $actual = $this->controller->getList();
+        $this->jsonapiResponderMock->expects($this->once())
+            ->method('getContentResponse')
+            ->with($todos)
+            ->willReturn(new Response());
 
-        $this->assertSame(
-            json_encode([
-                'todos' => [],
-            ]),
-            $actual->getContent()
-        );
+        $this->controller->getList();
     }
 
     /**
@@ -103,19 +126,12 @@ class TodoControllerTest extends TestCase
             ->with($uuidString)
             ->willReturn($expectedTodo);
 
-        $actual = $this->controller->getOne($uuidString);
+        $this->jsonapiResponderMock->expects($this->once())
+            ->method('getContentResponse')
+            ->with($expectedTodo)
+            ->willReturn(new Response());
 
-        $this->assertSame(
-            200,
-            $actual->getStatusCode()
-        );
-
-        $this->assertSame(
-            json_encode([
-                'todo' => $this->serializer->serializeOne($expectedTodo),
-            ]),
-            $actual->getContent()
-        );
+        $this->controller->getOne($uuidString);
     }
 
     /**
@@ -131,17 +147,15 @@ class TodoControllerTest extends TestCase
             ->with($uuidString)
             ->willThrowException(new \RuntimeException());
 
-        $actual = $this->controller->getOne($uuidString);
+        $this->jsonapiResponderMock->expects($this->once())
+            ->method('getErrorResponse')
+            ->with(
+                $this->isInstanceOf(NotFoundError::class),
+                404
+            )
+            ->willReturn(new Response());
 
-        $this->assertSame(
-            404,
-            $actual->getStatusCode()
-        );
-
-        $this->assertSame(
-            json_encode(new \stdClass()),
-            $actual->getContent()
-        );
+        $this->controller->getOne($uuidString);
     }
 
     /**
@@ -157,16 +171,56 @@ class TodoControllerTest extends TestCase
             ->with($uuidString)
             ->willThrowException(new \RuntimeException());
 
-        $actual = $this->controller->getOne($uuidString);
+        $this->jsonapiResponderMock->expects($this->once())
+            ->method('getErrorResponse')
+            ->with(
+                $this->isInstanceOf(NotFoundError::class),
+                404
+            )
+            ->willReturn(new Response());
 
-        $this->assertSame(
-            404,
-            $actual->getStatusCode()
-        );
+        $this->controller->getOne($uuidString);
+    }
 
-        $this->assertSame(
-            json_encode(new \stdClass()),
-            $actual->getContent()
-        );
+    /**
+     * @test
+     * @throws \Exception
+     */
+    public function shouldRender404WhenTodoDoesNotExistForUpdate()
+    {
+        $uuidString = Uuid::uuid1()->toString();
+
+        $expectedTitle = 'Some todo';
+        $expectedDescription = 'Some description';
+
+        $this->commandBusMock->expects($this->once())
+            ->method('handle')
+            ->with(new UpdateTodoCommand(
+                TodoId::fromUuidString($uuidString),
+                $expectedTitle,
+                $expectedDescription
+            ))
+            ->willThrowException(new \RuntimeException());
+
+        $this->jsonapiResponderMock->expects($this->once())
+            ->method('getErrorResponse')
+            ->with(
+                $this->isInstanceOf(NotFoundError::class),
+                404
+            )
+            ->willReturn(new Response());
+
+        $request = new Request([], [], [], [], [], [], json_encode([
+            'data' => [
+                'id' => $uuidString,
+                'type' => 'todos',
+                'attributes' => [
+                    'title' => $expectedTitle,
+                    'description' => $expectedDescription,
+                ],
+            ],
+        ]));
+
+        $this->controller->update($request, $uuidString);
     }
 }

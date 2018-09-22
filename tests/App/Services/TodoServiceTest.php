@@ -66,6 +66,26 @@ class TodoServiceTest extends TestCase
      * @test
      * @throws \Exception
      */
+    public function shouldThrowWhenTryingToFindNonexistentTodo()
+    {
+        $this->expectException(\RuntimeException::class);
+
+        $expectedId = Uuid::uuid1()->toString();
+
+        $this->repoMock->expects($this->once())
+            ->method('find')
+            ->with($expectedId)
+            ->willReturn(null);
+
+        $service = new TodoService($this->entityManagerMock, $this->repoMock);
+
+        $service->findTodo($expectedId);
+    }
+
+    /**
+     * @test
+     * @throws \Exception
+     */
     public function shouldFindPageOfTodos()
     {
         $expectedId = Uuid::uuid1()->toString();

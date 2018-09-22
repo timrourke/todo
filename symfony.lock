@@ -95,6 +95,9 @@
     "league/tactician-logger": {
         "version": "v0.10.0"
     },
+    "neomerx/json-api": {
+        "version": "v2.0.6"
+    },
     "nikic/php-parser": {
         "version": "v4.0.3"
     },
