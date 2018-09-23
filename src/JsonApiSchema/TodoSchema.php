@@ -11,7 +11,7 @@ class TodoSchema extends BaseSchema
 {
     use SerializesDateTimesTrait;
 
-    protected $resourceType = 'todos';
+    protected $resourceType = 'todo';
 
     /**
      * @param \App\Entity\Todo $resource

@@ -12,7 +12,6 @@ use App\JsonApiResponder\JsonApiResponder;
 use App\Service\TodoService;
 use Doctrine\DBAL\Types\ConversionException;
 use League\Tactician\CommandBus;
-use Neomerx\JsonApi\Document\Error;
 use Ramsey\Uuid\Exception\InvalidUuidStringException;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,6 +19,11 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
+/**
+ * Class TodoController
+ * @package App\Controller
+ * @Route("/api/todos", name="todo_")
+ */
 class TodoController extends AbstractController
 {
     /**
@@ -48,7 +52,7 @@ class TodoController extends AbstractController
     }
 
     /**
-     * @Route("/todos", methods={"GET"})
+     * @Route("/", methods={"GET"})
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
     public function getList(): Response
@@ -59,7 +63,7 @@ class TodoController extends AbstractController
     }
 
     /**
-     * @Route("/todos/{id}", methods={"GET"})
+     * @Route("/{id}", methods={"GET"})
      * @param string $id
      * @return \Symfony\Component\HttpFoundation\Response
      */
@@ -78,7 +82,7 @@ class TodoController extends AbstractController
     }
 
     /**
-     * @Route("/todos", methods={"POST"})
+     * @Route("/", methods={"POST"})
      * @param \Symfony\Component\HttpFoundation\Request $request
      * @return \Symfony\Component\HttpFoundation\Response
      * @throws \Exception
@@ -100,7 +104,7 @@ class TodoController extends AbstractController
     }
 
     /**
-     * @Route("/todos/{id}", methods={"PATCH"})
+     * @Route("/{id}", methods={"PATCH"})
      * @param \Symfony\Component\HttpFoundation\Request $request
      * @param string $id
      * @return \Symfony\Component\HttpFoundation\Response
@@ -130,7 +134,7 @@ class TodoController extends AbstractController
     }
 
     /**
-     * @Route("/todos/{id}", methods={"DELETE"})
+     * @Route("/{id}", methods={"DELETE"})
      * @param string $id
      * @return \Symfony\Component\HttpFoundation\Response
      */
