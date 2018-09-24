@@ -52,7 +52,7 @@ class TodoController extends AbstractController
     }
 
     /**
-     * @Route("/", methods={"GET"})
+     * @Route("", methods={"GET"})
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
     public function getList(): Response
@@ -82,7 +82,7 @@ class TodoController extends AbstractController
     }
 
     /**
-     * @Route("/", methods={"POST"})
+     * @Route("", methods={"POST"})
      * @param \Symfony\Component\HttpFoundation\Request $request
      * @return \Symfony\Component\HttpFoundation\Response
      * @throws \Exception
@@ -93,9 +93,9 @@ class TodoController extends AbstractController
         $data = json_decode($json, true);
 
         $command = new CreateTodoCommand(
-            TodoId::fromUuidString($data['todo']['id']),
-            $data['todo']['title'],
-            $data['todo']['description']
+            TodoId::fromUuidString($data['data']['id']),
+            $data['data']['attributes']['title'],
+            $data['data']['attributes']['description']
         );
 
         $this->commandBus->handle($command);
