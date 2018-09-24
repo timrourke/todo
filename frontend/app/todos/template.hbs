@@ -1,8 +1,27 @@
 <h1>Todos</h1>
 
 <ul>
-  
   {{#each todos as |todo|}}
     <li>{{todo.title}} - {{todo.description}}</li>
   {{/each}}
 </ul>
+
+<form action="#0">
+  <label for="title">
+    Title
+    {{input
+      type="text"
+      value=newTodo.title
+    }}
+  </label>
+  <label for="description">
+    Description
+    {{input
+      type="text"
+      value=newTodo.description
+    }}
+  </label>
+  <button type="submit" {{action (route-action "createNewTodo" newTodo)}}>
+    Add Todo
+  </button>
+</form>

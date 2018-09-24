@@ -6,5 +6,5 @@ export default Model.extend({
   title:       attr('string'),
   description: attr('string'),
   createdAt:   attr('date'),
-  updatedAt:   attr('data'),
+  updatedAt:   attr('date'),
 });
