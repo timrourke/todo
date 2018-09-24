@@ -17,11 +17,6 @@ class TodoControllerTest extends WebTestCase
 {
     use BootstrapsSqliteTestDatabaseTrait;
 
-    /**
-     * @var \App\Serializer\TodoJsonSerializer
-     */
-    private $serializer;
-
     protected function setUp()
     {
         parent::setUp();
@@ -29,8 +24,6 @@ class TodoControllerTest extends WebTestCase
         self::bootKernel();
 
         $this->bootstrapSqliteTestDatabase(self::$kernel);
-
-        $this->serializer = new TodoJsonSerializer();
     }
 
     /**
@@ -75,7 +68,7 @@ class TodoControllerTest extends WebTestCase
 
         $client->request(
             'GET',
-            '/todos/' . $uuid->toString()
+            '/api/todos/' . $uuid->toString()
         );
 
         $response = $client->getResponse();
@@ -133,10 +126,7 @@ class TodoControllerTest extends WebTestCase
 
         $client = static::createClient();
 
-        $client->request(
-            'GET',
-            '/todos'
-        );
+        $client->request('GET', '/api/todos');
 
         $response = $client->getResponse();
 
@@ -156,21 +146,34 @@ class TodoControllerTest extends WebTestCase
      */
     public function shouldCreateTodo()
     {
+        $expectedId = TodoId::fromUuid(Uuid::uuid1());
+        $expectedTitle = 'Some title';
+        $expectedDescription = 'Some description';
+
         $todo = new Todo(
-            TodoId::fromUuid(Uuid::uuid1()),
-            'Some title',
-            'Some description',
+            $expectedId,
+            $expectedTitle,
+            $expectedDescription,
             new DateTimeImmutable(),
             new DateTimeImmutable()
         );
 
         $client = static::createClient();
 
-        $payload = ['todo' => $this->serializer->serializeOne($todo)];
+        $payload = [
+            'data' => [
+                'type' => 'todos',
+                'id' => $expectedId->asString(),
+                'attributes' => [
+                    'title' => $expectedTitle,
+                    'description' => $expectedDescription,
+                ]
+            ]
+        ];
 
         $client->request(
             'POST',
-            '/todos',
+            '/api/todos',
             [],
             [],
             [],
@@ -187,8 +190,8 @@ class TodoControllerTest extends WebTestCase
             [
                 [
                     'id' => $todo->getId()->asString(),
-                    'title' => 'Some title',
-                    'description' => 'Some description',
+                    'title' => $expectedTitle,
+                    'description' => $expectedDescription,
                 ],
             ],
             $todos
@@ -239,7 +242,7 @@ class TodoControllerTest extends WebTestCase
 
         $client->request(
             'PATCH',
-            '/todos/' . $uuidString,
+            '/api/todos/' . $uuidString,
             [],
             [],
             [],
@@ -321,7 +324,7 @@ class TodoControllerTest extends WebTestCase
 
         $client->request(
             'DELETE',
-            '/todos/' . $uuidString
+            '/api/todos/' . $uuidString
         );
 
         $response = $client->getResponse();
@@ -343,7 +346,7 @@ class TodoControllerTest extends WebTestCase
 
         $client = static::createClient();
 
-        $client->request('DELETE', '/todos/' . $uuidString);
+        $client->request('DELETE', '/api/todos/' . $uuidString);
 
         $this->assertSame(204, $client->getResponse()->getStatusCode());
     }
