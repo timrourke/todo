@@ -6,10 +6,7 @@ namespace App\Tests\Functional;
 
 use App\Entity\Todo;
 use App\Entity\TodoId;
-use App\Serializer\TodoJsonSerializer;
 use DateTimeImmutable;
-use Ramsey\Uuid\Builder\DefaultUuidBuilder;
-use Ramsey\Uuid\Doctrine\UuidBinaryOrderedTimeType;
 use Ramsey\Uuid\Uuid;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 

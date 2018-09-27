@@ -10,7 +10,6 @@ use App\Entity\Todo;
 use App\Entity\TodoId;
 use App\JsonApiError\NotFoundError;
 use App\JsonApiResponder\JsonApiResponder;
-use App\Serializer\TodoJsonSerializer;
 use App\Service\TodoService;
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
@@ -31,11 +30,6 @@ class TodoControllerTest extends TestCase
      * @var TodoController
      */
     private $controller;
-
-    /**
-     * @var \App\Serializer\TodoJsonSerializer
-     */
-    private $serializer;
 
     /**
      * @var \PHPUnit\Framework\MockObject\MockObject|TodoService
@@ -68,8 +62,6 @@ class TodoControllerTest extends TestCase
             $this->commandBusMock,
             $this->jsonapiResponderMock
         );
-
-        $this->serializer = new TodoJsonSerializer();
 
         $this->controller->setContainer(new Container());
     }
